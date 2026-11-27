@@ -9,7 +9,18 @@ public class SerialMatrixBuilder {
     }
 
     public CompatibilityTable build() {
-        // TODO: variabel tabel; loop tileI dan tileJ (lewati tileI == tileJ), isi kanan dan bawah
-        return null;
+        int jumlahTile = data.getJumlahTile();
+        CompatibilityTable tabel = new CompatibilityTable(jumlahTile);
+        int[][] kanan = tabel.getKanan();
+        int[][] bawah = tabel.getBawah();
+
+        for (int tileI = 0; tileI < jumlahTile; tileI++) {
+            for (int tileJ = 0; tileJ < jumlahTile; tileJ++) {
+                if (tileI == tileJ) continue;
+                kanan[tileI][tileJ] = scorer.edgeScore(tileI, tileJ, true);
+                bawah[tileI][tileJ] = scorer.edgeScore(tileI, tileJ, false);
+            }
+        }
+        return tabel;
     }
 }

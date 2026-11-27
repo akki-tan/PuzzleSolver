@@ -1,12 +1,17 @@
 // Pemilik: Adi
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ThreadMonitor {
+    private long waktuNol;
     private long[] waktuMulai, waktuSelesai;
     private List<List<String>> logThread;
 
     public ThreadMonitor(int jumlahThread) {
+        waktuNol = System.nanoTime();
         waktuMulai = new long[jumlahThread];
         waktuSelesai = new long[jumlahThread];
         logThread = new ArrayList<>();
@@ -24,14 +29,40 @@ public class ThreadMonitor {
     }
 
     public void catat(int idThread, int langkah, int skor) {
-        // TODO: simpan baris "idThread,waktu,langkah,skor" ke logThread.get(idThread)
+        double waktu = (System.nanoTime() - waktuNol) / 1000000.0;
+        logThread.get(idThread).add(idThread + "," + waktu + "," + langkah + "," + skor);
     }
 
     public void simpanCsv(String namaFile) {
-        // TODO: tulis semua log ke output/namaFile untuk grafik timeline dan grafik skor
+        new File("output").mkdirs();
+        try (PrintWriter csv = new PrintWriter("output/" + namaFile)) {
+            csv.println("idThread,waktuMs,langkah,skor");
+            for (List<String> log : logThread) {
+                for (String baris : log) csv.println(baris);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void simpanTimeline(String namaFile) {
+        new File("output").mkdirs();
+        try (PrintWriter csv = new PrintWriter("output/" + namaFile)) {
+            csv.println("idThread,mulaiMs,selesaiMs");
+            for (int t = 0; t < waktuMulai.length; t++) {
+                double mulai = (waktuMulai[t] - waktuNol) / 1000000.0;
+                double selesai = (waktuSelesai[t] - waktuNol) / 1000000.0;
+                csv.println(t + "," + mulai + "," + selesai);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void cetakRingkasan() {
-        // TODO: cetak durasi tiap thread (waktuSelesai - waktuMulai)
+        for (int t = 0; t < waktuMulai.length; t++) {
+            double durasi = (waktuSelesai[t] - waktuMulai[t]) / 1000000.0;
+            System.out.println("Thread " + t + ": " + durasi + " ms, " + logThread.get(t).size() + " catatan");
+        }
     }
 }
