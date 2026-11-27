@@ -4,8 +4,11 @@ public class SharedBest {
     static int[] papanTerbaik = null;
 
     public static synchronized int[] sync(int skor, int[] papan) {
-        // TODO: kalau skor < skorTerbaik, simpan salinan papan; kalau tidak, kembalikan salinan papanTerbaik
-        return papan;
+        if (papan != null && (skor < skorTerbaik || papanTerbaik == null)) {
+            skorTerbaik = skor;
+            papanTerbaik = papan.clone();
+        }
+        return (papanTerbaik != null) ? papanTerbaik.clone() : null;
     }
 
     public static synchronized int[] getPapanTerbaik() { return papanTerbaik; }
