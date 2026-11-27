@@ -61,11 +61,7 @@ public class Main {
         visualizer.saveImage(papanAcak, data, "output/acak.png");
 
         Solver solver = new Solver(tabel, baris, kolom);
-        ThreadMonitor monitor = new ThreadMonitor(jumlahThread);
-        solver.pasangPemantau(monitor, null);
-
         ParallelSolver parallelSolver = new ParallelSolver(solver, data.getJumlahTile(), seed);
-        parallelSolver.pasangPemantau(monitor);
 
         System.out.printf("Awal       -> skor: %d, benar: %.2f%%%n",
                 solver.hitungSkor(papanAcak), checker.persenTileBenar(papanAcak));
@@ -75,6 +71,10 @@ public class Main {
                 solver.hitungSkor(hasilTanpaBerbagi), checker.persenTileBenar(hasilTanpaBerbagi));
         visualizer.saveImage(hasilTanpaBerbagi, data, "output/hasil_tanpa_berbagi.png");
 
+        ThreadMonitor monitor = new ThreadMonitor(jumlahThread);
+        solver.pasangPemantau(monitor, null);
+        parallelSolver.pasangPemantau(monitor);
+
         int[] hasilBerbagi = parallelSolver.runMultiStart(jumlahThread, jedaSync, true);
         System.out.printf("Berbagi    -> skor: %d, benar: %.2f%%%n",
                 solver.hitungSkor(hasilBerbagi), checker.persenTileBenar(hasilBerbagi));
@@ -82,9 +82,9 @@ public class Main {
 
         monitor.cetakRingkasan();
         monitor.simpanCsv("thread_log.csv");
+        monitor.simpanTimeline("timeline.csv");
 
         System.out.println("\n=== Benchmark ===");
-        Benchmark benchmark = new Benchmark();
-        benchmark.measureSpeedup();
+        new Benchmark(gambar).measureSpeedup();
     }
 }
