@@ -34,8 +34,7 @@ public class ThreadMonitor {
     }
 
     public void simpanCsv(String namaFile) {
-        new File("output").mkdirs();
-        try (PrintWriter csv = new PrintWriter("output/" + namaFile)) {
+        try (PrintWriter csv = new PrintWriter(FolderOutput.path(namaFile))) {
             csv.println("idThread,waktuMs,langkah,skor");
             for (List<String> log : logThread) {
                 for (String baris : log) csv.println(baris);

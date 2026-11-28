@@ -1,0 +1,10 @@
+cat > .gitignore <<'EOF'
+# Abaikan semua isi output/, kecuali 6 folder run terbaru
+output/*
+!output/2026-11-28_18-21-06/
+!output/2026-11-28_18-21-58/
+!output/2026-11-28_18-22-54/
+!output/2026-11-28_18-33-35/
+!output/2026-11-28_18-41-15/
+!output/2026-11-28_18-44-52/
+EOF

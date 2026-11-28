@@ -15,6 +15,9 @@ public class Benchmark {
     private double speedup;
 
     private Solver solver;
+    private GreedyBuilder greedy;
+    private boolean pakaiGreedy = true;
+    private int langkahPerPosisi = 5000;
     private int jumlahTile;
     private QualityChecker pemeriksa = new QualityChecker();
 
@@ -23,9 +26,8 @@ public class Benchmark {
     }
 
     public void measureSpeedup() {
-        new File("output").mkdirs();
-        try (PrintWriter csvTahap1 = new PrintWriter("output/benchmark_tahap1.csv");
-             PrintWriter csvTahap2 = new PrintWriter("output/benchmark_tahap2.csv")) {
+        try (PrintWriter csvTahap1 = new PrintWriter(FolderOutput.path("benchmark_tahap1.csv"));
+             PrintWriter csvTahap2 = new PrintWriter(FolderOutput.path("benchmark_tahap2.csv"))) {
             csvTahap1.println("grid,jumlahTile,jumlahThread,waktuSerialMs,waktuParalelMs,speedup");
             csvTahap2.println("grid,mode,jumlahThread,waktuMs,skor,persenTileBenar");
             for (int grid : daftarGrid) {
@@ -75,12 +77,18 @@ public class Benchmark {
         CompatibilityTable tabel = new ParallelMatrixBuilder(data, scorer).buildParallel(jumlahCore);
 
         solver = new Solver(tabel, grid, grid);
+        solver.setTepiTetap(true);
+        solver.setLangkahPerTile(pakaiGreedy ? 10000 : 50000);
+        if (pakaiGreedy) solver.setSuhuAwal(300);
+        greedy = pakaiGreedy ? new GreedyBuilder(tabel, grid, grid) : null;
         jumlahTile = data.getJumlahTile();
 
         jalankanMode(grid, "serial", 1, false, csv);
         for (int jumlahThread : daftarThread) {
             jalankanMode(grid, "tanpa berbagi", jumlahThread, false, csv);
             jalankanMode(grid, "dengan berbagi", jumlahThread, true, csv);
+            jalankanBerlapis(grid, "berlapis tanpa berbagi", jumlahThread, false, csv);
+            jalankanBerlapis(grid, "berlapis berbagi per lapisan", jumlahThread, true, csv);
         }
     }
 
@@ -92,11 +100,37 @@ public class Benchmark {
         for (int u = 0; u < jumlahUlang; u++) {
             SharedBest.reset();
             ParallelSolver pencari = new ParallelSolver(solver, jumlahTile, 100 + u);
+            pencari.setGreedy(greedy);
             long mulai = System.nanoTime();
             int[] hasil = pencari.runMultiStart(jumlahThread, jedaSync, pakaiBerbagi);
             totalWaktu += System.nanoTime() - mulai;
             totalSkor += solver.hitungSkor(hasil);
-            totalPersen += pemeriksa.persenTileBenar(hasil);
+            totalPersen += pemeriksa.persenTileBenarDalam(hasil, grid, grid);
+        }
+
+        double waktuRata = ms(totalWaktu / jumlahUlang);
+        double skorRata = (double) totalSkor / jumlahUlang;
+        double persenRata = totalPersen / jumlahUlang;
+
+        System.out.println("Tahap 2 | grid " + grid + " | " + namaMode + " | " + jumlahThread + " thread | "
+                + waktuRata + " ms | skor " + skorRata + " | benar " + persenRata + "%");
+        csv.println(grid + "," + namaMode + "," + jumlahThread + "," + waktuRata + "," + skorRata + "," + persenRata);
+    }
+
+    private void jalankanBerlapis(int grid, String namaMode, int jumlahThread, boolean pakaiBerbagi, PrintWriter csv) {
+        if (greedy == null) return;
+        long totalWaktu = 0;
+        long totalSkor = 0;
+        double totalPersen = 0;
+
+        for (int u = 0; u < jumlahUlang; u++) {
+            ParallelSolver pencari = new ParallelSolver(solver, jumlahTile, 100 + u);
+            pencari.setGreedy(greedy);
+            long mulai = System.nanoTime();
+            int[] hasil = pencari.runBerlapis(jumlahThread, pakaiBerbagi, langkahPerPosisi);
+            totalWaktu += System.nanoTime() - mulai;
+            totalSkor += solver.hitungSkor(hasil);
+            totalPersen += pemeriksa.persenTileBenarDalam(hasil, grid, grid);
         }
 
         double waktuRata = ms(totalWaktu / jumlahUlang);

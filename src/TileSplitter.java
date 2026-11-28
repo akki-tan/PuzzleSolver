@@ -37,4 +37,24 @@ public class TileSplitter {
         }
         return papan;
     }
+
+    public boolean tepi(int posisi) {
+    int barisP = posisi / kolom, kolomP = posisi % kolom;
+    return barisP == 0 || kolomP == 0 || barisP == baris - 1 || kolomP == kolom - 1;
+    }
+
+    public int[] shuffleDalam(long seed) {
+        int[] papan = new int[baris * kolom];
+        java.util.ArrayList<Integer> dalam = new java.util.ArrayList<>();
+        for (int p = 0; p < papan.length; p++) {
+            papan[p] = p;
+            if (!tepi(p)) dalam.add(p);
+        }
+        java.util.Collections.shuffle(dalam, new Random(seed));
+        int k = 0;
+        for (int p = 0; p < papan.length; p++) {
+            if (!tepi(p)) papan[p] = dalam.get(k++);
+        }
+        return papan;
+    }
 }
